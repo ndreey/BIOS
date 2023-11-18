@@ -1,0 +1,198 @@
+---
+title: "Processing and Analysis of Biological Data BIOS14"
+subtitle: "Lecture 1 - Preface and summary statistics"
+output: html_document
+date: "2023-11-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Preface
+
+These notes are to be considered as necessary knowledge for data analysis and quantitative methods in ecology, evolutionary biology, and related fields.
+
+The main focus for this course is not hypothesis testing, but the quantification, parameter estimation, and biological interpretation of results. In an effort to mitigate the issue that occurs frequently in scientific writing, namely that the presentation of results in biological publications has increasingly tended towards a focus on statistical hypothesis testing (*"significance testing"*), at the cost of focus on the biological significance of any result obtained.
+
+For example, "the treatment significantly (P \< 0.05) affected the growth of plants" where an more appropriate sentence would be "plants in the high-fertilizer treatment grew 40% larger than those in the low-fertilizer treatment".
+
+## Measurement and meaning in biology
+
+Measurement theory examines the numbers we record in scientific studies and how well these numbers represent the real-world phenomena they're supposed to reflect. David Houle and colleagues highlight a common issue in biology: the measurements gathered in the field or lab often don't align well with the biological properties they aim to represent. This reflects a broader issue in biology where the interpretation of data isn't always clearly connected to the initial biological questions.
+
+### Insights from Houle et al., 2010
+
+Houle and colleagues underscore the pivotal role of measurement theory in biological research, advocating for its increased focus in scientific education and practice. They highlight the frequent misuse of measurement scales and a lack of transparency in data errors or sources within the biological research community.
+
+#### Comprehensive Measurement Theory
+
+-   Measurement theory is critical for assigning meaningful numerical values to natural phenomena, ensuring accurate representation of reality.
+-   Representational measurement theory confirms that numerical measurements reflect true relationships among natural attributes.
+-   Pragmatic measurement theory navigates the challenges of linking numbers to real-world phenomena, striving for meaningful yet practical measurements.
+
+#### Applying Measurement Theory to Biological Research
+
+-   Measurement theory guides the choice of appropriate models and statistical methods, promoting the avoidance of common errors such as misinterpreting correlation or p-values.
+-   It inspires innovative approaches in biological modeling, like using pairwise comparisons for measuring fitness or signed ratios for asymmetry.
+-   As a flexible framework, it also acknowledges the challenges of dealing with data uncertainty and complexity in biological systems.
+
+#### Dimensional Analysis and Scaling
+
+-   Dimensional analysis ensures that mathematical models and equations are consistent, based on the principle of dimensional homogeneity.
+-   It aids in simplifying complex models and in deriving scaling laws, which are vital for theoretical and empirical studies in biology.
+
+#### Ensuring Meaning in Modeling and Statistics
+
+-   Models should act as hypotheses about the natural world, consistent with the empirical relational structures they aim to represent.
+-   Statistics must align with the measurement scale and the theoretical context of the data to enable accurate descriptions and explanations.
+-   Comprehensive reporting and clear communication of results, assumptions, and uncertainties are essential for meaningful statistical analysis.
+
+#### Houle et al. 2010 Measurment principles
+
+-   Keep theoretical context in mind.
+-   Align hypotheses with established theories: Ensure your research questions and hypotheses are consistent with existing theoretical frameworks.
+-   Make meaningful definitions.
+-   Know what the numbers mean.
+-   Remember where the numbers come from.
+-   Respect scale type.
+-   Know the limits of your model.
+-   Never substitute a test for an estimate.
+-   Present estimates with their uncertainty: Always report the precision of your statistical estimates, such as confidence intervals or standard errors, to reflect their reliability.
+-   Never separate a number from its unit.
+
+## Scale types and transformations
+
+-   **Scale Types**: Quantitative measurements in biology are assigned specific scale types, each with its own permissible transformations.
+-   **Ratio Scale**: Has a natural zero and no negative values, typical for size measurements in units like mm or m.
+-   **Interval Scale**: Lacks a natural zero and is arbitrary, like recording dates based on days since January 1st.
+-   **Ordinal Scale**: Has a sequence where the order matters (e.g., "dominant" \> "common" \> "rare"), but the intervals between rankings aren't uniform.
+-   **Nominal Scale**: Categorizes measurements without any quantitative value, such as color categories (red, blue, green).
+
+## Summary statistics
+
+T## Summary Statistics in Data Analysis
+
+The first step in any data analysis is to become familiar with the dataset. To achieve this, it's essential to explore the data both graphically and through relevant summary statistics, which describe the properties of the data.
+
+-   **Central Tendency (Measures of Location)**
+    -   *Arithmetic Mean (µ or x̄)*: The average value, which can be skewed by outliers.
+    -   *Median*: The middle value in a dataset, which remains unaffected by outliers and is preferred for skewed distributions.
+    -   *Mode*: The less frequent value, often used for ordinal or nominal variables.
+    -   *Geometric Mean*: Appropriate for datasets that are multiplicative, such as those found in biological growth rates or financial returns. It is calculated as the nth root of the product of n values.
+-   **Consideration of Data Distribution**
+    -   Skewness and outliers can mislead the arithmetic mean.
+    -   Reporting both the mean and the median can provide a more accurate picture of data distribution.
+    -   The geometric mean is particularly useful in biology for evaluating long-term success strategies, such as evolutionary fitness and bet-hedging.
+-   **Variability (Measures of Spread)**
+    -   *Variance (σ²)*: The average of the squared differences from the Mean. Useful for variance partitioning because variance components are additive.
+    -   *Standard Deviation (σ)*: The square root of the variance, providing dispersion in the same units as the data, which makes it easily interpretable.
+-   **Important Distinctions in Reporting**
+    -   Variance and standard deviation quantify dispersion within the data, not the precision of an estimate, which is described by the standard error (SE).
+    -   Avoid using the ± sign with standard deviation and variance, as it is not a measure of certanty of an estimate.
+
+## Proportional Variation and Logarithmic Transformation
+
+To compare variability relative to the size of the entities being measured, we often look at proportional variation. This is especially relevant when larger values inherently come with more variation.
+
+-   **Coefficient of Variation (CV)**
+    -   Defined as the ratio of the standard deviation to the mean ($CV = \frac{\sqrt{\sigma}}{\mu}$).
+    -   Provides a dimensionless measure of relative variability, allowing comparison across different units or scales.
+-   **Natural Logarithms**
+    -   Transforming data by taking natural logarithms puts them on a proportional scale.
+    -   The standard deviation of log-transformed data approximates the CV when the variance is significantly smaller than the mean.
+-   **Logarithmic Properties for Proportional Analysis**
+    -   Logarithmic transformations reveal proportional relationships, as shown in the equation $\log\left(\frac{a}{b}\right) = -\log\left(\frac{b}{a}\right)$, where a is 10% larger than b.
+    -   Differences on a log scale can be interpreted as percentage differences when the values are close, making log ratios a useful measure for effect size.
+
+By understanding and applying these measures, researchers can more accurately assess and compare the variability of data points, irrespective of their absolute magnitude, which is crucial in fields like biology where such comparisons are frequent.
+
+### Simulating data from statistical distributions
+
+`R` has built-in functions for simulating data from many statistical distributions, including the normal distribution. The function `rnorm()` takes three main arguments, the number of samples `n`, the mean, and the standard deviation `sd`.
+
+```{r, fig.height=4, fig.width=4}
+x = rnorm(n=100, mean=5, sd=1)
+mean(x)
+sd(x)
+hist(x, las=1, main="")
+```
+
+## Bootstrapping
+
+Bootstrapping is a statistical resampling method used to estimate the distribution of a statistic by repeatedly sampling with replacement from the data set. It allows us to assess the uncertainty or variability of a statistical estimate, especially when the underlying distribution is unknown.
+
+-   **Bootstrapping Technique**
+    -   Involves taking repeated samples from the dataset (with replacement) and calculating the statistic of interest for each sample.
+    -   This process generates a distribution of the statistic, from which we can calculate confidence intervals, standard errors, and other measures of statistical uncertainty.
+-   **Application to Summary Statistics**
+    -   Particularly useful when dealing with summary statistics like the coefficient of variation (CV), which summarizes a population.
+    -   By bootstrapping the CV, we can understand the variability in this measure and make more informed inferences about the population.
+
+Bootstrapping provides a non-parametric approach to statistical inference, requiring no assumptions about the form of the population distribution. It's a powerful tool for assessing the stability of summary statistics and the uncertainty in complex estimations, widely applicable in various fields of study.
+
+### Example
+
+Non-parametric bootstrap
+
+```{r fig.width=4, fig.height=4}
+
+# Setting a seed for reproducibility.
+set.seed(1)
+
+# Generating a sample of 50 random numbers from a normal distribution with mean 10 and sd 2.
+x <- rnorm(50, 10, 2)
+se_x <- sqrt(var(x)/length(x))    # Calculating the theoretical standard error of the mean.
+
+# Non-parametric bootstrap: resampling with replacement to create a sampling distribution.
+out <- vector('numeric', 1000)    # Pre-allocate space for bootstrap results.
+for(i in 1:1000){
+  sample <- sample(x, replace=TRUE)    # Sample with replacement.
+  out[i] <- mean(sample)               # Store the mean of each bootstrap sample.
+}
+
+# The standard deviation of the 'out' vector approximates the standard error of the mean.
+hist(out, las=1, main="")    # Histogram of bootstrap sample means.
+# Calculate the standard deviation (bootstrap estimate of SE).
+sd(out) #  0.2307834
+
+# Output the theoretical standard error calculated earlier.
+se_x    #  0.2351537
+
+# Derive a 95% confidence interval from the bootstrap distribution.
+quantile(out, c(0.025, 0.975))
+#      2.5%     97.5% 
+#    9.760249 10.624404 
+
+
+# Analytical approach to calculate a 95% CI using the properties of the standard normal distribution.
+mean(x) - 1.96*se_x
+mean(x) + 1.96*se_x
+```
+
+## Exercise
+
+Derive a 95% confidence interval for the CV of x
+
+```{r}
+# Function to calculate CV
+cv <- function(x) {
+  sd(x) / mean(x)
+}
+
+# Original CV
+cv_original <- cv(x)
+
+# Bootstrap CV
+n <- length(x)
+bootstrap_cv <- replicate(10000, {
+  sample_x <- sample(x, size = n, replace = TRUE)
+  cv(sample_x)
+})
+
+# Calculate the 95% confidence interval from the bootstrap distribution of CV
+cv_ci <- quantile(bootstrap_cv, c(0.025, 0.975))
+
+# Output the results
+cv_ci
+```
