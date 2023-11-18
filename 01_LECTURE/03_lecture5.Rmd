@@ -1,0 +1,72 @@
+---
+title: "logistic regression"
+author: "Andre Bourbonnais"
+date: "2023-11-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+### Discussion of exerise 4
+- check if outlier is also an outlier when log scaled.
+- dont remove until you have seen that it is not gaussian in the residual 
+normality
+- log +1 is not recommended for. IF there are zeros, sqrt instead of using 
+pseudo counts. 
+- sqrt the response values
+
+### Backward selection
+- Fit, removes the poorest, fit again, remove the poorest, fit again. repeat.
+- R**2 > 30% is really good for biological data.
+- R**2 will drop when we backward select.
+- backward select until everything is statistically significant.
+- look at the estimates from the lm model.
+
+### Jaro hot tip
+`summary(linearmodel)`
+`anova(linearmodel)` will show which parameters are significant and must be kept.
+
+
+## Logistic regression
+
+### Generalized linear models
+- linear model but relaxed assumption of gaussian distributed residuals.
+- the model connects a response variable to the familiar linear oredictor through a link function. 
+- the link functions are specific to diffrerent error distributions, the most common are binomial and posson errors. 
+
+
+### Analysis of binary data.
+- two parameters, _n_, number of trials and _p_, probability of success.
+- A GLM with binomial errors is called a logistic regression.
+- THe most common link function is the logit (logg odds) link.
+-
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

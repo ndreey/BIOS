@@ -1,0 +1,70 @@
+---
+title: "01_lecture2"
+author: "Andre Bourbonnais"
+date: "2023-11-08"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# The linear model
+
+-   Most of the models we will work with in this course are linear models, that describe how a linear set of predictors relate to a response variable.
+-   A key element of the model is the so called *linear predictor*.
+-   When the predictor variables is continuous, a linear model represents the regression of $y$ on $x$.
+-   Linear regression is a common tool in biology, used to analyse the (potentially causal) effect of $x$ on $y$.
+-   Also used to predict unknown values of $y$. For example how *mouse weight* affects the *mouse size*.
+
+### Hypothesis testing in linear regression
+
+-   The p-value depends on the strength of the effect, the variation in the data, and the sample size.
+-   All else being equal, the p-value will decrease with increasing sample size.
+
+#### The problems with p-values
+
+-   For moderate sample sizes, even important effects can go statistically undetected.
+-   Detectable effects at small sample sizes will often be upwardly biased.
+-   Beyond statistical aspects of p-value, the biological problem is that focusing on the p-value stops people form thinking.
+-   Estimation and quantification are the key aspects of modelling in biology.
+
+### Model diagnostics
+
+-   It is important to know the assumptions of our models, like normally distributed residuals for a linear regression.
+-   However, small deviations from normality is generally not a problem, and testing statistically for such deviations have all the usual problems of hypothesis testing.
+
+### Variation explained
+
+-   The model $r^2$ (coefficient of determination) gives the proportion of variance explained by the model.
+-   Can be computed as the variance in the model-predicted values over the total variance in the response variable.
+
+# General intro to exercises
+
+All exercises will involve formulating a research question, choosing analysis methods, performing the analysis, interpreting the results, and writing relevant *Methods* and *Results*.
+
+### Writing data analysis methods
+
+-   Normally a specific section at the end of the *Methods*.
+-   Focus on the aim of the analysis before technical details
+-   For models, list terms in words, sometimes include model equation.
+-   `R` syntax is acceptable
+
+### Writing results
+
+-   Start with summary statistics/patterns of variation
+-   Focus on biology over statistics (explain the result in biological terms)
+-   Quantify and exemplify ($y$ increased by 0.5 mm per mm increase in $x$)i
+-   Avoid unnecessary introductory sentences like "Population means are reported in Table 1".
+-   Refer to tables and figures after a statement ("Body sized varied substantially among populations (range = X.X to Y.Y, Table 1))
+
+### Making nice figures
+
+-   Label and units are vital
+-   Keep regression lines within the data range
+-   If several symbols/colors: legend inside the graph.
+-   Usually quite square panels look the best.
+
+### Making nice tables
+
+-   No vertical lines and all parameters explained in legend.

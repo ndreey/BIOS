@@ -1,0 +1,93 @@
+---
+title: "Lecture 4 Multiple Regression"
+author: "Andre Bourbonnais"
+date: "2023-11-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lecture 4 Multiple Regression
+
+#### Factorial Experiment (Read up on this more)
+
+-   Two independent variables with the same two levels within.
+-   Log transform to get normality
+-   Check $F$ statistics. *p-values* dont say anything.
+-   Table with ANOVA summary stats.
+
+# Multiple regression and ANCOVA
+
+-   multiple $xij$ would be multiple regression
+-   mixed would lead to ANCOVA
+
+### Multiple regression
+
+-   A linear model with multiple continous predictors is called a multiple regression.
+-   Each slope is estimated while holding the other predictors constant, and are thus **marginal effects**.
+-   An implication if doing a univariate model, it will also include indirect effects of other variables in the **net effect** of a predictor.
+-   Pathdiagrams are a nice way of illustration multiple regression.
+
+### Multiple regression model in `R`
+
+-   Always fit a model `lm (formula = y ~ x1 + x2)` where we use `+`for additive effect. We could also have use `*` for factorial effect.
+-   If we standardize the predictors, we can compare the strength of effects across variables (units of standard deviations).
+
+### Overfitting and multicollinearity
+
+-   When we increase the number of variables in the model, we risk *overfitting*.
+-   That is, fitting a model that explain much variance, but makes poor predictions for independent data.
+-   If the independent (**predictor**) variables are strongly correlated, this can lead to imprecise estimates (multicollinearity).
+-   Therefore, we want the most parsimonous model (Occams's Raxor)
+-   We can quantify these effects through variance inflation factors, or though cross-validation.
+
+### Variance inflation factors
+
+"How much variance in X1 is explained by X2 + X3: `x1~x2+x3`"
+
+### Analysis of Covariance (ANCOVA)
+
+-   Analysis of covariance are linear models with both cintinous and categorical predictors.
+-   We have y, x and groups.
+-   Is there an effect of the predictor variable, is there a difference between the means of the groups.
+-   We ask if the slopes are different, if the means are different,
+-   From the table, the intercept is the reference group. The second is the effect. Thirds would be the intercept-reference intercept for the response group. Fourth would be the difference between the slopse (x:gfMale).
+
+### Overview of linear models
+
+-   Continuous covariates: (multiple) regression.
+-   Categorical covariates: N-way ANOVA (N number of predictors)
+-   Continous and categorical covariates: ANCOVA
+
+# Whats tidy data
+
+-   Each row is a unit of observation, each column is a description of the observation.
+
+## Data handling with tidyverse
+
+### Merging multiple datasaets.
+
+-   `left_join()` and `right_join()` are used to merge datasets based on a common column. The difference between the two is that `left_join()` keeps all rows.
+
+### Select info based on conditions
+
+-   `select()` is used to select columns based on their names.
+-   `filter()` is used to select rows based on their values.
+-   `arrange()`is used to reorder rows based on their values.
+-   `mutate()` is used to create new columns based on transformations of existing columns.
+-   `summarise()` is used to collapse many values down to a single summary.
+
+### Change the format of dataset (long vs wide)
+
+# gather() is used to convert from wide to long format.
+
+-   `spread()` is used to convert from long to wide format.
+-   `pivot_longer()` is used to convert from wide to long format.
+-   `pivot_wider()` is used to convert from long to wide format.
+
+### Grouping and summarizing data
+
+-   `group_by()` is used to group data by one or more variables.
+-   `summarize()` is used to collapse many values down to a single summary.
