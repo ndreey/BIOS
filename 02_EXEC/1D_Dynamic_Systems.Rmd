@@ -1,0 +1,132 @@
+---
+title: "One-Dimensional Dynamic Systems"
+author: "Andre Bourbonnais"
+date: "2023-11-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# One-Dimensional Dynamic Systems
+
+Code chunk to load library
+
+```{r}
+library(tidyverse)
+library(deSolve)
+```
+
+## Exercise 1
+
+blaablablalala
+
+#### Question 1
+
+Consider the logistic equation that we discussed in the lecture: $$ \Large \frac{dn}{dt}=r_0n(1-\frac{n}{K}) $$
+
+##### a) Write a modified growth equation that takes harvesting into account
+
+$$ \large \frac{dn}{dt}=r_0n(1-\frac{n}{K})-hn$$
+
+##### b) Find the equilibrium points of the system:
+
+Expanding the equation from 1a, we get: $$\large n(r_0(1-\frac{n}{K})-h)$$Through the zero product law we see that $$\Large n_1 = 0,\quad n_2 = K(1-\frac{h}{r_0})$$As by setting $r_0(1-\frac{n}{K})-h = 0$ and solving for $n$.\
+As $n_1$ is an trivial equlibrium, we are left with $n_2$ which we will call $n^*$
+
+##### c) At what values of $\large h$ does the population go extinct?
+
+We understand that: $$\large r_0n(1-\frac{h}{K}) < hn$$ To determine which values of $h$ breaks this rule we need to solve for $h$ in $n^* = 0$.\
+$$\large n^* = 0 \quad \Longleftrightarrow \quad K(1-\frac{h}{r_0}) = 0 \quad \Longleftrightarrow \quad \frac{h}{r_0} = 1 \quad \Longleftrightarrow \quad h = r_0$$ Thus, the population goes extinct when: $$\Large r_0 \leq h$$
+
+##### d) Confirm that the equilibrium point is stable
+
+An equilibrium point is stable if: $$\large f'(n^*) < 0$$ Therefore, we need to derivate $f(n)$ and evaluate if using $r_0, \quad r_0 > h$ is less than zero at $f'(n^*)$.\
+
+$$\large f(n) = \frac{dn}{dt}=r_0n(1-\frac{n}{K})-hn$$ $$\large f'(n) = [\text{product rule}] = r_0(1-\frac{n}{K}) + r_0n(-\frac{1}{K}) -h$$
+
+$$\large f'(n^*) = r_0(1-\frac{K(1-\frac{h}{r_0})}{K}) + r_0K(1-\frac{h}{r_0})(-\frac{1}{K}) -h$$ $$\large f'(n^*) = h + h -h - r_0 = h - r_0$$ Thus, if $\large r_0 > h$ then $\large f'(n^*) < 0$ proving that the equilibrium point is stable.
+
+##### e) The *yield* per time unit is simply $\large hn$. What is the *yield* at equilibrium?
+
+We calculate $hn$ at the equilibrium which is $hn^*$: $$\large hn^* = hK(1-\frac{h}{r_0})$$
+
+##### f) At what value of $h$ is the yield maximized?
+
+The *yield* can be seen as the function $g(h) = hn$. Therefore, the max value for $h$ can be found by taking the derivative of $g(h)$ at $n^*$ and setting it to zero. $$g(h) = hK(1-\frac{h}{r_0})$$ $$g'(h) = K(1-\frac{h}{r_0}) + hK(-\frac{1}{r_0})$$ $$g'(h) = K - \frac{2hK}{r_0}$$ $$\large g'(h) = 0 \Longleftrightarrow K - \frac{2hK}{r_0} = 0 \Longleftrightarrow \large h = \frac{r_0}{2}$$
+
+When $h = \frac{r_0}{2}$, the yield is maximized. Thus we can calculate the maximum yield by plugging in $\frac{r_0}{2}$ into $g(h)$: $$\large g(\frac{r_0}{2}) = \frac{r_0}{2}K(1-\frac{\frac{r_0}{2}}{r_0}) = \frac{r_0}{2}K(1-\frac{1}{2}) = \frac{r_0}{2}K(\frac{1}{2}) = \frac{r_0K}{4}$$
+
+##### How is the return to equilibrium affected by $h$?
+
+The return time is calculated by: $$ \large T_R = \frac{1}{f'(n^*)}$$ Which gives us: $$ \large T_R = \frac{1}{h-r_0}$$\
+Thus, the closer $h \rightarrow r_0$ the longer the return time. This makes sense as $h$ is the harvesting rate, so the more we harvest the longer it will take for the population to return to equilibrium.
+
+#### Question 2
+
+bibbidipaapapapa
+
+##### a) Plot the growth function:
+
+$$\Large \frac{dn}{dt}=r_0n(1-\frac{n}{K})-hn$$
+
+```{r}
+
+# Params
+r0 <- 1
+K <- 100
+n <- seq(0, 100, length.out = 100)
+h <- 0.2
+
+# dndt function
+dndt <- r0 * n * (1 - n/K) - h * n
+
+# Make it to df
+df <- data.frame(n, dndt)
+
+# Plot
+df %>% 
+  ggplot(aes(x = n, y = dndt)) + 
+  geom_line() + 
+  geom_segment(aes(x = 0, y = 0, xend = 100, yend = 0)) +
+  geom_text(aes(x=80, y=0), label = "K", vjust = 1, size = 6) +
+  geom_text(aes(x=0, y=0), label = "0", vjust = 1, size = 6) +
+  theme_bw() +
+  ylim(-10, 20) +
+  labs(title = "Growth rate plot")
+```
+
+##### b) Solve the differential equation from 2a using the `ode()` function of the `deSolve` package. Plot the result.
+
+```{r}
+
+# Function
+pop_growth <- function(t, n, P) {
+    
+  dndt <- P$r0 * n * (1 - n/P$K) - P$h * n
+  return(list(dndt))
+}
+
+# Params
+P <- list(r0 = 1, K = 100, h = 0.2)
+
+# Vector of time points
+times <- seq(0, 100, 0.01)
+
+# Initial population size is 1, thus we set y = 1.
+res <- ode(y = 1, times = times, func = pop_growth, parms = P)
+
+# Change column names to avoid "1"
+colnames(res) <- c("time", "n")
+
+# Plot using ggplot
+res %>% 
+  as.data.frame() %>% 
+  ggplot(aes(x = time, y = n)) +
+  ylim(0, 100) +
+  geom_line() + 
+  theme_bw() +
+  labs(title = "Population Size per Time", x = "Time", y = "Population Size (n)")
+
+```
