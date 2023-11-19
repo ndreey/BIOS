@@ -1,0 +1,73 @@
+---
+title: "Multi-Dimensional Dynamic Systems"
+author: "Andre Bourbonnais"
+date: "2023-11-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Exercise 2, Dynamic systems
+
+Multidimensional ablalalalala
+
+```{r, echo = T, message = F, warning = F}
+library(tidyverse)
+library(deSolve)
+library(ggpubr)
+```
+
+## 1. Lotka-Volterra predator-prey equations
+
+Lotka-Volterra (LV) predator-prey equations are given by the following system of differential equations:
+
+$$\Large \frac{dn}{dt} = rn-anp$$ $$\Large\frac{dp}{dt} = anp - \mu p$$
+
+Where $\large n(t)$ is the prey population, $\large p(t)$ is the predator population, $\large r$ is the intrisic prey growth rate, $\large a$ is the predation rate (*attack rate*), and $\large \mu$ is the predator death rate (*mortality*).
+
+### a) Write the *isoclines* of the system.
+
+*"What will the **predator** population be when the **prey** population growth equals zero?"* Meaning, there is a sweet spot in predator population where the prey population is stable. This is called the *prey isocline* and *vice versa*. This value is called the *isocline* because it is the line where the population is stable.
+
+Thus, solve each *differential equation* at a time (equal to zero) and we will get the corresponding population value to keep the other value at 0 growth.
+
+$$\large \frac{dn}{dt} = 0 \leftrightarrow rn-anp = 0 \leftrightarrow n(r-ap) = 0$$ $$\large \frac{dp}{dt} = 0 \leftrightarrow anp - \mu p = 0 \leftrightarrow p(an-\mu) = 0$$\
+We get two trivial equilibrium points, $\large n = 0, p=0$ and two equilibrium points of interest: $$\Large \text{Prey: } p = \frac{r}{a}$$ $$\Large \text{Predator: } n = \frac{\mu}{a}$$
+
+```{r}
+# Define the function for LV isoclines
+LV_iso <- function(r, a, mu){
+  ne <- r/a
+  pe <- mu/a
+  return(list(prey_iso = ne, pred_iso = pe))
+}
+
+# Define the parameters
+P <- list(r = 3,
+          a = 0.2,
+          mu = 0.6
+          )
+isoc <- LV_iso(P$r, P$a, P$mu)
+
+# Plot the isoclines
+
+# Create a blank ggplot object with the axes limits where i add the isoclines 
+# using horizontal and vertical lines.
+ggplot() + 
+  geom_hline(yintercept = isoc$prey_iso, color = "blue", linetype = "dashed") +
+  geom_vline(xintercept = isoc$pred_iso, color = "red", linetype = "dashed") +
+  labs(x = "Prey", y = "Predator") +
+  # Multiply by 2 as the isoclines are the equilibrium points.
+  xlim(0, isoc$pred_iso*2) + 
+  ylim(0, isoc$prey_iso*2) +
+  theme_bw() +
+  annotate("text", x = 5, y = 16, label = "Prey isocline", color = "blue") +
+  annotate("text", x = 3.2, y = 24, label = "Predator isocline", color = "red",
+           angle = -90) +
+  ggtitle("Lotka-Volterra Isoclines")
+
+```
+
+## s
