@@ -34,7 +34,7 @@ Where $\large n(t)$ is the prey population, $\large p(t)$ is the predator popula
 Thus, solve each *differential equation* at a time (equal to zero) and we will get the corresponding population value to keep the other value at 0 growth.
 
 $$\large \frac{dn}{dt} = 0 \leftrightarrow rn-anp = 0 \leftrightarrow n(r-ap) = 0$$ $$\large \frac{dp}{dt} = 0 \leftrightarrow anp - \mu p = 0 \leftrightarrow p(an-\mu) = 0$$\
-We get two trivial equilibrium points, $\large n = 0, p=0$ and two equilibrium points of interest: $$\Large \text{Prey: } p = \frac{r}{a}$$ $$\Large \text{Predator: } n = \frac{\mu}{a}$$
+We get two trivial equilibrium points, $\large n = 0, p=0$ and two equilibrium points of interest: $$\Large \text{Prey: } p = \frac{r}{a}, \quad \text{Predator: } n = \frac{\mu}{a}$$
 
 ```{r}
 # Define the function for LV isoclines
