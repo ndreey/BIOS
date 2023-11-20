@@ -226,7 +226,7 @@ Use the `LV_jac()` function to calculate the Jacobian for a set of parameter val
 
 ```{r}
 # The Jacobian matrix
-J <- LV_jac(np, P3)
+J <- LV_jac(np_eq, P3)
 
 eigenval <- eigen(J)
 
