@@ -1,0 +1,23 @@
+---
+title: "ANOVA"
+author: "Andre Bourbonnais"
+date: "2023-11-20"
+output: html_document
+---
+
+# Analysis of variance (ANOVA)
+
+Analysis of Variance (ANOVA) is a powerful statistical method used when we deal with categorical predictor variables, represented as $x$. This technique determines if significant differences exist among group means.
+
+**Key Components of ANOVA:**
+
+-   **Between-Group Variance:** This variance indicates the variability due to differences between group means. It's a measure of how distinct each group is in terms of their mean values.
+
+-   **Within-Group Variance:** Conversely, this variance quantifies the variability within each individual group, showing the spread of data points within each category.
+
+The *F-statistic* is a ratio that compares the between-group variance to the within-group variance, providing insight into whether the observed differences between group means are significant or could have occurred by chance.
+
+```{r, echo = T, message = F, warning = F}
+library(tidyverse)
+library(ggpubr)
+```
