@@ -1,0 +1,186 @@
+---
+title: "Stochastic Systems"
+author: "Andre Bourbonnais"
+date: "2023-11-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Stochastic systems
+
+A *stochastic system* has an uncertain outcome, it can not be predicted beforehand. One run of a stochastic system is called an *realization* and multiple realizations can be used to *estimate* the outcome of the system. As, we will get a distribution of values for all possible realizations.
+
+```{r, echo = T, message = F, warning = F}
+library(tidyverse)
+library(ggpubr)
+library(viridis)
+
+```
+
+## Exercise: Random walk
+
+Write a function `random_walk()` that simulates $\large N$ number of random walks for $\large t_max$ time-steps, each walk starting at zero. Plot all random walks in the same plot as well a separate histogram for the final position of each random walk.
+
+```{r}
+# The function
+random_walk <- function(N, t_max){
+  
+  # Create a dataframe with N columns and t_max rows
+  walk_df <- data.frame(matrix(0, nrow = t_max, ncol = N))
+  
+  # For each walk, generate a random walk
+  for(i in 1:N){
+    tmp <- numeric(t_max)
+    
+    # Loop over each time step
+    for(j in 2:t_max){
+      # Randomly choose a number between 0 and 1
+      r <- rnorm(1)
+      tmp[j] <- tmp[j-1] + r
+    }
+    # Update the dataframe
+    walk_df[,i] <- tmp
+  }
+  
+  walk_df$time <- 1:t_max
+  
+  # Return the matrix
+  return(walk_df)
+}
+
+rwalk <- random_walk(100,1000)
+
+# Make it to long format
+rwalk_long <- rwalk %>% 
+  pivot_longer(cols = -time, names_to = "walk", values_to = "position")
+
+# Plot the random walks
+walks_plot <- rwalk_long %>% 
+  ggplot(aes(x = time, y = position, color = walk)) +
+  geom_line() +
+  theme_bw() +
+  scale_color_manual(values = rep("black",ncol(rwalk))) +
+  theme(legend.position = "none") +
+  labs(x = "Time", y = "Position") +
+  ggtitle("Random walks")
+
+# Plot a density plot of the final positions
+final_pos_plot <- rwalk_long %>% 
+  filter(time == max(time)) %>%
+  ggplot(aes(x = position)) +
+  geom_density(fill = "black", alpha = 0.5) +
+  theme_bw() +
+  labs(x = "Final position", y = "Density") +
+  ggtitle("Final position of random walks")
+
+# Plot together
+ggarrange(walks_plot, final_pos_plot, ncol = 1, nrow = 2)
+```
+
+## Exercise: A queue
+Generate a function that simulates a queue. Every time step a new customer is added to the queue with the probability $\large P_{in}$. Furthermore, every time step a customer is finished and leaves the queue with the probability $\large P_{out}$. In the end, plot the number of customers left in the queue over time.
+
+
+```{r}
+# The function
+run_queue <- function(Pin, Pout, time_step){
+  # Each time step we either add or remove a customer.
+  
+  queue <- numeric(time_step)
+  
+  for (ts in 2:time_step){
+    # Add a customer
+    in_c <- ifelse(runif(1) <= Pin, 1, 0)
+    out_c <- ifelse(runif(1) <= Pout, 1, 0)
+
+    # Update the number of customers
+    
+    queue[ts] <- queue[ts-1]+ in_c + out_c
+  }
+  
+  return(queue)
+}
+
+h <- run_queue(0.2, 0.5, 100)
+
+# Plot the queue in ggplot
+ggplot(data.frame(h), aes(x = 1:length(h), y = h)) +
+  geom_line() +
+  theme_bw() +
+  labs(x = "Time", y = "Number of customers") +
+  ggtitle("Queue")
+
+
+# plot(h, type = "l", xlab = "Time", ylab = "Number of customers")
+
+```
+
+## Exercise: The Moran process
+The Moran process is a model in population genetics, where it models the spread of an allele in a population. The Moran process is a stochastic process, where the population size is constant. The population is divided into two groups, one with the allele and one without. At each time step, one individual is chosen to reproduce, and one individual is chosen to die. The individuals are chosen randomly. The process continues until the population is fixed with the same allele. 
+
+```{r}
+
+moran <- function(N, Na){
+  vec <- rep("B", N-Na)
+  vec <- c(vec, rep("A", Na))
+
+  for (i in 1:N) {
+    
+    death_idx <- sample(1:length(vec), 1)
+    reprod_idx <- sample(vec[-death_idx], 1)
+    vec[death_idx] <- reprod_idx
+  }  
+  
+  return(vec)
+}
+  
+df_moran <- data.frame(matrix(0, ncol = 100, nrow = 10))
+
+for (j in 1:10000) {
+  vv <- moran(10,1)
+  df_moran[,j] <- vv
+}
+
+
+
+
+df_moran_long <- df_moran %>% 
+  pivot_longer(cols = everything(), names_to = "time", values_to = "allele")
+  
+df_A <- df_moran_long %>% 
+  group_by(time) %>% 
+  mutate(allele.A = sum(allele == "A")) %>% 
+  select(time, allele.A)
+
+df111 <- df_A[1:100,]
+df111$time <- 1:100
+colnames(df111) <- c("iteration", "A")
+
+# Plot the density of the final number of A alleles
+df111 %>% 
+  ggplot(aes(x = A)) +
+  geom_density(fill = "black", alpha = 0.5) +
+  theme_bw() +
+  labs(x = "Final number of A alleles", y = "Density") +
+  ggtitle("Moran process")
+
+
+
+
+
+
+```
+
+
+
+ 
+
+
+
+
+
+
+
