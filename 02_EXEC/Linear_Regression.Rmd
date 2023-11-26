@@ -116,7 +116,59 @@ cor(x, y)^2
 
 One should not be hostile against p-values but because the p-value is obtained by comparing the observed test statistic $\large t$ to its known distribution, and $\large t$ increases with sample size, it follows that when the sample size increases, anything will at some point be *statistically significant*. Thus, there is a push to move away from p-values and focus more on other statistical measures to evaluating and interpreting the results (effect size, confidence intervals). We need to focus on the interpretation of the parameter estimates, their units, and their consequence withing the context of the analysis/study.
 
-# Linear regression example
+# Linear regression example 1
+
+## The data
+
+```{r}
+df <- data.frame(
+  weight = c(0.9, 1.8, 2.4, 3.5, 3.9, 4.4, 5.1, 5.6, 6.3),
+  size = c(1.4, 2.6, 1.0, 3.7, 5.5, 3.2, 3.0, 4.9, 6.3))
+
+```
+
+```{r}
+# Overview of the data
+ggplot(df, aes(x = weight, y = size)) +
+  geom_point(size = 5) +
+  theme_bw()
+```
+
+## The linear regression
+
+I fit the model so that size is the response variable (y) and weight is the predictor variable (x). Meaning, $$\large size=\text{y-intercept} + \text{slope}*\text{weight}$$
+
+-   The first line just prints out the original call to the `lm()` function.
+
+-   The second line prints out the summary of the residuals. Ideally, they should be symmetrically distributed around the line.
+
+-   The third line tells us about the least-squares estimates for the fitted line (estimated coefficients). They tell us about the $y = kx+m$. The intercept is 0.5 and the slope is 0.377. The intercept is the value of $\large size$ when $\large weight$ is zero. The slope is the change in $\large size$ per unit change in $\large weight$. The *p-values* test whether the esatimates for the intercept and the slope are equal to 0 or not. If they are equal to 0 that means they don't have much use in the model. We are often not interested in the intercept p-value but the $\large x$ p-value. If it is statistically significant it will get us a reliable guess of mouse size.
+
+-   Multiple R-squared: 0.3859, tells us that $\large weight$ explains 38.59% of the variance in $\large size$.
+
+-   F-statistic: 5.807 on 1 and 7 DF, p-value: 0.047, tells us that the model is statistically significant. It tells us if the $\large r^2$ is statistically significant or not. Meaning, that weight does indeed give us a reliable guess of size.
+
+Lastly, we can add the regression line to the plot by adding `geom_smooth(method = "lm")` to the plot.
+
+```{r}
+# Fit the linear model
+mouse_reg <- lm(size ~ weight, data = df)
+summary(mouse_reg)
+
+```
+
+```{r}
+
+# Add the regression line to the plot
+ggplot(df, aes(x = weight, y = size)) +
+  geom_point(size = 5) +
+  geom_smooth(method = "lm", se = F) +
+  theme_bw()
+
+
+```
+
+# Linear regression example 2
 
 I wonder if there is a difference in allometry between females and birds based on their bird brains yaoo. \## The data
 
@@ -221,3 +273,44 @@ Based on these analyses and results, we could write the Analysis Methods and Res
 *Analysis Methods* We expected brain size to scale with body size according to a power-law relationship on the form $brainmass = a\times bodymass^b$. We linearized the expected power relationship through the logarithmic transformation $log(brainmass) =log(a) + b \times log(bodymass)$, and then fitted a linear regression model to the data. To assess whether the allometric slope ($b$) differs between the sexes, we analysed data for males and females separately.
 
 *Results* Brain size scaled allometrically with body size (Fig. 1). In males, brain size increased by 5.5% per 10% increase in body mass (allometric slope = $0.55\pm0.010$), and body mass explained 83.5% of the variance in brain mass. The allometric slope was slightly steeper in females ($0.57\pm0.012$).
+
+# Multiple Regression in R example
+
+Can weight and tail length predict size? In the plot we see that both size and tail correlate with weight.
+
+-   The first row has weight on the y-axis and then size and tail on the x-axis for each respective plot.
+
+-   We also see that weight and tail are correlated, which can indicate that both of them wont be needed for the model.
+
+```{r}
+# Load the data
+df <- data.frame(
+  size = c(1.4, 2.6, 1.0, 3.7, 5.5, 3.2, 3.0, 4.9, 6.3),
+  weight = c(0.9, 1.8, 2.4, 3.5, 3.9, 4.4, 5.1, 5.6, 6.3),
+  tail = c(0.7,1.3,0.7,2.0,3.6,3.0,2.9,3.9,4.0))
+
+# Inspect the data
+plot(df)
+
+```
+
+Now we can fit the model and see if weight and tail can predict size. $$\large size = \beta_0 + \beta_1 \times weight + \beta_2 \times tail$$
+
+```{r}
+# Fit the model
+multi_reg <- lm(size ~ weight + tail, data = df)
+
+# Inspect the model
+summary(multi_reg)
+
+```
+
+Firstly, as we are doing multiple regression we now use the *adjusted R-squared value*. What we see is that the model is significant.
+
+-   `Adjusted R-squared:  0.7995`
+
+-   `F-statistic: 16.95 on 2 and 6 DF,  p-value: 0.003399`
+
+Secondly, the `Coefficients:` are now very interesting. `weight` compares the multiple regression to the simple regression. Meaning: $$\large size = \beta_0 + \beta_1 * weight + \beta_2 * tail \quad \LARGE VS \quad \large size = \beta_0 + \beta_2 * tail$$ The p-value (0.4345) tells us that using **weight** and **tail** together is not significantly better than using **tail** alone. Whereas for **tail**: $$\large size = \beta_0 + \beta_1 * weight + \beta_2 * tail \quad \LARGE VS \quad \large size = \beta_0 + \beta_1 * weight$$ It is giving a p-value of 0.0219 stating that using **weight** and **tail** together is significantly better than using **weight** alone to predict size.
+
+In summary, using weight and tail to predict size is good but if we wanted to save time, we could spare ourselves the agony of weighting mice and just measure their tails to predict size.
