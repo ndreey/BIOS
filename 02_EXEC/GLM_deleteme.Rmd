@@ -1,0 +1,324 @@
+---
+title: "Generalized Linear Models (GLM)"
+author: "Andre Bourbonnais"
+date: "2023-11-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(MASS)
+library(MuMIn)
+```
+
+## Generalized Linear Models (GLM)
+
+GLM add flexibility to the linear model by allowing deviations from the usual assumption of normally distributed residuals. A GLM conists of the familiar linear predictor of a linear model and a link function $\large g$, that places the predictor on a Gaussian scale.
+
+The binomial distribution has two parameterns $\large n$ and $\large p$. The link function for the binomial distribution is the logit function. The logit function is defined as $\large logit(p) = log(\frac{p}{1-p})$. The logistic function is used to model the probability of a certain class or event existing such as pass/fail, win/lose, alive/dead or healthy/sick. This curve is typically sigmoidal in shape. The logistic function is also used in neural networks to define the activation function of a node.
+
+The theoretical variance of the binomial distribution is given by $\large \sigma^2 = np(1-p)$. This is important to keep in mind, because it affects hwo we can compare the (proportional) variation of variable measures as proportions. If one population has a mean of 0.5, it will be expected to be much more variable than a second population with a mean of 0.1, just because there is less opportunity to vary. This is a now well-recognized problem in demography research, where the interest is often in comparing the extent of variation in life-history traits measured as proportions, such as germination or survival. One proposed solution is to scale the observed CV by the maximum based on the theoretical variance, but a perhaps simpler approach is to transform the proportional data in a way that makes them approach a normal distribution.
+
+A more meaningful transformation is the logit or log odds transformation $$logit(x) = log(\frac{x}{1-x})$$
+
+```{r}
+logit = function(x) log(x/(1-x))
+invlogit = function(x) 1/(1+exp(-x))
+
+x = runif(200)
+logit_x = logit(x)
+
+par(mfrow=c(2,2))
+hist(x, las=1)
+hist(logit_x, las=1)
+
+xx = seq(-5, 5, 0.01)
+plot(xx, invlogit(xx), type="l", las=1,
+     xlab="Logit (x)",
+     ylab="P")
+plot(x, invlogit(logit_x), las=1)
+```
+
+The logit transformation is the most common *link function* in a GLM with binomial errors.
+
+## Logistic regression
+
+A logistic regression is a GLM with a binomial error distribution and is well suited for analysing binary data (or proportions).
+
+```{r}
+x = rnorm(200, 10, 3)
+eta = -2 + 0.4*x + rnorm(200, 0, 2)
+p = invlogit(eta)
+y = rbinom(200, 1, p)
+
+par(mfrow=c(1,3))
+plot(x, eta, las=1)
+plot(x, p, las=1)
+plot(x, y, las=1)
+
+
+```
+
+Above, we simulated data by first formulating a linear predictor $\large \eta = \beta_0 + \beta_1 x$ and then transforming the predicted values into probabilities : $\large p = \frac{1}{1+e^{-\eta}}$. We then simulated binary data by drawing from a binomial distribution with probability $\large p$.
+
+The first thing to be aware of is that we are fitting a GLM, we obtain the parameter estimates on the link scale. Note that the parameter estimates are not too far from those we used to define the linear predictor $\large \eta$ when we simulated the data. These values are meaningful as such, and if the predictor variable has units of $mm$, the slopes have units of *log odds* $mm^-1$.
+
+To interpret the results biologically and to represent them in graphs, it can be useful to backtransform the predicted values to the probability scale. For example, we can ask how much the probability changes for a standard deviation increase in the predictor variable. Note that a log odds fo 0 corresponds to a probability of 0.5 $$log(\frac{0.5}{1-0.5}) = log(1) = 0$$. If we solve the model equation (the linear predictor) for 0, we can thus obtain the predictor value corresponding to a probability of 0.5. Which is often a relevant benchmark $$ 0 = \beta_0 + \beta_1 x$$ $$ x = -\frac{\beta_0}{\beta_1}$$
+
+```{r}
+
+m = glm(y ~ x, family=binomial(link="logit"))
+summary(m)
+
+```
+
+The GLM summary table does not provide an $\large r^2$ value, because the normal $\large r^2$ does not work for logistic regression. There are however several *Pseudo* $\large r^2$ available, typuically based on comparing the likelihood of the model to that of a null model. A similar model but with only an intercept. The reason is that, unlike a Gaussian mmodel where the residual variance is well defined, the residual variance in a binomial GLM has to be approximated one way or the other. The two alternatives used by the function is the theoretical variance of the binomial distribution, and an approximation based on the delta method. The delta method is a way to approximate the variance of a function of a random variable based on the variance of the random variable itself. The delta method is used to approximate the variance of the residuals in a binomial GLM, and the resulting Pseudo $\large r^2$ is called $\large r^2_{\mu}$.
+
+```{r}
+r.squaredGLMM(m)
+
+```
+
+## Fitting binomial GLMs in R
+
+There are three ways to formulate these models.
+
+### 1. Using the `glm` function
+
+```{r}
+glm(y ~ x, family=binomial(link="logit"))
+
+```
+
+When each observation is based on more than one trial, we can formulate the model in two ways. Where y is the proportion of successes, and n is the number of trials. The second method is to fit a two-column matrix as response variable, where the first column is the number of successes, and the second column is the number of failuers.
+
+```{r}
+glm(y~x, family=binomial(link="logit"), weights=n)
+
+
+
+glm(cbind(successes, failuers) ~ x, family=binomial(link="logit"))
+
+
+```
+
+# Poisson and negative-binomial regression
+
+A second very common data type in biology is count data, which occurs when we have counted something. IN ecological studies we often count individuals or species, and in evolutionary biology we often count e.g. the number of offspring. For such data, the data distribution is often skewed, and the variance tends to increase with the mean. The Poisson distribution is tailored for such data.
+
+```{r}
+x <- rpois(200, 3)
+
+# Plot density plot
+ggplot(data.frame(x), aes(x)) + 
+  geom_density() +
+  theme_bw()
+
+```
+
+The Poisson distribution has a single parameter $large \lambda$, which is the mean and the variance of the distribution.
+
+## Requirements for Poisson regression
+
+You chose a Poisson regression when you have count data, and the mean and variance of the data are approximately equal. If the variance is larger than the mean, you should use a negative binomial regression.
+
+-   When the *response variable* (dependent) are **counts** or **rates** (counts per unit time or space). Typically, the mean value is very small. If the distribution is wider then maybe use *quasi-poisson*.
+
+-   No specific requirements for the *prediction variables* (independent), there can be one ore more and they can be *continous, descrete, counts, etc.*
+
+-   Observations must be independent of each other.
+
+-   The dependent variable must follow poisson distrbution, meaning that it has a mean = variance. If the variance is larger than the mean, use negative binomial regression.
+
+-   Special cases when there is alot of zeros.
+
+## Interpreting Poisson Regression Results
+Because of the log link function, the coefficients indicates that a 1-unit increase in predictor variable causes a factor of $\large e^{\beta x}$ increase in the expected count. For example, if the coefficient for a predictor is 0.5, the expected count increases by a factor of $\large e^{0.5*1} = 1.65$ for every 1-unit increase in the predictor variable. 
+
+## Overdispersion and underdispersion
+Poission regression assumes that the variance is equal to the mean. Often, this is not the case. If the variance is larger than the mean, the data is said to be *overdispersed*. If the variance is smaller than the mean, the data is said to be *underdispersed*. In both cases, the Poisson regression is not appropriate. In the case of overdispersion, the negative binomial regression is a good alternative. In the case of underdispersion, it is better to use a _quasi-poisson_ regression, which is a Poisson regression where the standard errors are adjusted to account for the underdispersion.
+
+- quasi-poisson is strongly influenced by large counts. 
+
+The first clue to determine if the data is overdispersed is if the **Residual devience** is much larger than the **Degrees of freedom**. The second clue is if the **Dispersion parameter** is much larger than 1. The third clue is if the **Pearson's chi-squared statistic** is much larger than the **Degrees of freedom**.
+
+_What is the problem with overdispersion?_\ 
+Well, the coefficient estimates will be similar but the **SE** will be under estimated. If the SE is under estimated then this will lead to smaller p-values (inflated type 1 error). This means that we will be more likely to reject the null hypothesis when we shouldn't. This means that we will be more likely to find a significant effect when there isn't one (_false positive). 
+
+_What causes overdispersion?_\
+Overdispersion is caused by unexplained variation in the data. 
+
+- There could be predictor values that we haven't included in the model. Meaning, there can be a mixture of different distributions in the data.
+
+- There could be some underlying clustering/heterogenity in the sampled data.
+
+- More zero values that expected (zero inflated). Sometimes there are excess zero values, because there is a separate process that also generates zero values. Thus, the standard models dont describe the data well. For example, does the daily rainfall influence the number of landslides? Many days dont have rainfalls, and thus no landslides. But, there are also days with rainfalls and no landslides. The zeros from no rainfall inflate the number of expected zero values.
+
+
+For low values of $\large \lambda$, the distribution is skewed and the variance is smaller than the mean. For high values of $\large \lambda$, the distribution is approximately normal and the variance is approximately equal to the mean. However, the variance is still constrained to be the same as the mean, which is not the case for the normal distribution.
+
+```{r}
+
+# Show the Poisson distribution for different values of lambda
+x = seq(0, 20, 1)
+y = dpois(x, lambda=1)
+plot(x,y, type="b", las=1, xlab="k", ylab="P(x=k)", pch=16, col=1)
+points(x, dpois(x, lambda=3), type="b", pch=16, col=2)
+points(x, dpois(x, lambda=10), type="b", pch=16, col=3)
+legend("topright", col=1:3, pch=16, 
+       legend=c(expression(paste(lambda, " = 1")),
+                expression(paste(lambda, " = 3")),
+                expression(paste(lambda, " = 30"))))
+
+```
+
+The distribution of count data can sometimes by normalized through a log-transformation, and the log is indeed the link function of a Poisson regression model. The alternative method of log-transforming the data and then fitting a Gaussian model is problematic when there are zeros in the data. Adding a constant (e.g. 0.5 or 1) is sometimes an option, but is generally not recommended. A better option is to analyze the data in a GLM framework with Poisson-distributed errors and a log link function.
+
+```{r}
+x = rnorm(200, 10, 3)
+eta = -2 + 0.2*x
+y = ceiling(exp(eta + rpois(200, 0.3)))
+
+par(mfrow=c(1,2))
+plot(x, eta, las=1)
+plot(x, y, las=1)
+```
+
+```{r}
+m = glm(y~x, family="poisson")
+summary(m)
+```
+
+When interpreting Poisson regressions, there are several things to keep in mind. First, as in all GLMs, the parameters are reported on the link scale, here log. Recall that the link scale has useful proportional properties, so that the slope can be interpreted roughly as the proportional change in y per unit change in x. To plot the fitted regression line, we have to back-transform the predicted values. This time we use the generic `predict` function to obtain the predicted values on the data scale, and to construct a 95% confidence polygon.
+
+```{r, fig.height=4, fig.width=4}
+plot(x, y, las=1, col="darkgrey", pch=16)
+xx = seq(min(x), max(x), 0.01)
+y_hat = predict(m, newdata=list(x=xx), type="response", se.fit=T)
+lines(xx, y_hat$fit)
+#lines(xx, y_hat$fit+1.96*y_hat$se.fit, lty=2)
+#lines(xx, y_hat$fit-1.96*y_hat$se.fit, lty=2)
+
+polygon(c(xx, rev(xx)), 
+        c(y_hat$fit+1.96*y_hat$se.fit, 
+          rev(y_hat$fit-1.96*y_hat$se.fit)), 
+        col = rgb(0,1,0,.5), border = FALSE)
+```
+
+As in logistic regression the normal $r^2$ is not valid, and we can use e.g. the `r.squaredGLMM` function to obtain a Pseudo $r^2$. For a simple GLM an older Pseudo $r^2$ is $$1-\frac{Residual ~ deviance}{Null ~ deviance}$$.
+
+```{r}
+r.squaredGLMM(m)
+1-(m$deviance/m$null.deviance)
+```
+
+The *deviance* is a measure of how far our model is from a "perfect" or saturated model, i.e. one that perfectly explains the data. Fitting a GLM is done by maximizing the likelihood of a model, which is the same as minimizing the deviance. The deviance is defined mathematically as 2 times the difference in the log likelihood of the model and a saturated model, and can be used to compare alternative models. For example, the Pseudo $r^2$ above is based on comparing the (mis)fit of the focal model to a null model with only an intercept. If a model is as bad as a null model, the Pseudo $r^2$ will be 0. We can also use the deviance to compare other models, e.g. through likelihood ratio tests (more on that later).
+
+Second, recall that the Poisson distribution has a single parameter $\lambda$ determining both the mean and the variance. In real count data the variance often increase disproportionately compared to the mean, a phenomenon called *overdispersion*. Biologically, this occurs because we tend to observe multiple entities together. For example, in a survey of common eiders, we will often see either no eiders, or a lot of eiders.
+
+We can quantify overdispersion in the data based on the fitted model by calculating the ratio of the residual deviance to the residual degrees of freedom. In the model above there is no serious overdispersion, because the residual deviance is only a little larger than the residual degrees of freedom. Let us construct an example with more serious over dispersion.
+
+```{r}
+set.seed(1)
+x = rnorm(200, 10, 3)
+eta = -2 + 0.2*x
+y = floor(exp(eta + rnbinom(200, 1, mu=.8)))
+
+par(mfrow=c(1,2))
+plot(x, eta, las=1)
+plot(x, y, las=1)
+```
+
+```{r}
+m = glm(y~x, family="poisson")
+summary(m)
+```
+
+Here the overdispersion is serious, and we can not trust the model estimates. In this case, we need an alternative link function that allows the variance to increase more than the mean. The negative binomial distribution is a good option. The negative binomial is similar to the Poisson distribution, but includes an additional parameter modelling the disproportionate increase in variance with increasing mean.
+
+```{r}
+library(MASS)
+m = glm.nb(y~x)
+```
+
+\newpage
+
+```{r}
+summary(m)
+```
+
+Note especially that the estimated standard error is now much larger.
+
+## Data exercise: bee distribution
+
+The following dataset includes the abundance of the bee species *Eulaema nigrita* in the Brazilian Atlantic forest, and a number of potential predictor variables.
+
+-   **MAT**: Mean annual temperature (°C)
+
+-   **MAP**: Mean annual precipitation (mm)
+
+-   **Tseason**: Temperature seasonality (coefficient of variation)
+
+-   **Pseason**: Precipitation seasonality (coefficient of variation)
+
+-   **forest.**: Proportion forest cover in the landscape
+
+-   **lu_het**: Land use heterogeneity (Shannon diversity of local land-use classes)
+
+Use a GLM to build a model explaining the distribution patterns of *Eulaema nigrita*. Interpret the results and produce nice tables and figures.
+
+```{r}
+dat = read.csv("../00_DATA/Eulaema.csv")
+head(dat)
+```
+
+Example analysis
+
+As an example, we will ask whether the local abundance of *Eulaema nigrita* depends on forest cover, while accounting for variation in yearly rainfall. We could write the analysis methods as follows:
+
+To assess the response of *Eulaema nigrita* to variation in forest cover, we fitted a generalized linear model with negative binomial error distribution (accounting for severe overdispersion) and a log link function. To account for the expected greater abundance of the study species in drier areas, we included mean annual precipitation as a covariate in the model.
+
+```{r}
+m = glm.nb(Eulaema_nigrita ~ MAP + forest., data = dat)
+summary(m)
+1- m$deviance/m$null.deviance
+```
+
+### Making predictions from multiple-regression models
+
+To illustrate the response of *Eulaema nigrita* to local forest cover, while also representing the effect of rainfall, we plot the response curves for three different fixed values of mean annual precipitation.
+
+```{r, fig.height=4, fig.width=4}
+plot(dat$forest., dat$Eulaema_nigrita, col="grey", las=1,
+     xlab="Forest cover",
+     ylab="El. nigrita abundance")
+
+newforest = seq(min(dat$forest.), max(dat$forest.), length.out=200)
+newMAP = rep(mean(dat$MAP), length(newforest))
+y_hat = predict(m, newdata=list(MAP=newMAP, 
+                                forest.=newforest), 
+                type="response")
+lines(newforest, y_hat,lwd=2)
+
+newMAP2 = rep(mean(dat$MAP)+sd(dat$MAP), length(newforest))
+y_hat2 = predict(m, newdata=list(MAP=newMAP2, 
+                                forest.=newforest), 
+                type="response")
+
+newMAP3 = rep(mean(dat$MAP)-sd(dat$MAP), length(newforest))
+y_hat3 = predict(m, newdata=list(MAP=newMAP3, 
+                                forest.=newforest), 
+                type="response")
+
+lines(newforest, y_hat2, lwd=2, col=2)
+lines(newforest, y_hat3, lwd=2, col=3)
+
+legend("topleft", lty=1, lwd=2, col=1:3, bty="n", 
+       legend=c("MAP = Mean",
+                "MAP = Mean + SD",
+                "MAP = Mean - SD"))
+```

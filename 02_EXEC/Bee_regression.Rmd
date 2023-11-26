@@ -1,0 +1,239 @@
+---
+title: "Bee_analysis"
+author: "Andre Bourbonnais"
+date: "2023-11-24"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Bee exercise: Linear regression
+
+The following dataset includes the abundance of the bee species *Eulaema nigrita* in the Brazilian Atlantic forest, and a number of potential predictor variables.
+
+-   **MAT**: Mean annual temperature (°C)
+
+-   **MAP**: Mean annual precipitation (mm)
+
+-   **Tseason**: Temperature seasonality (coefficient of variation)
+
+-   **Pseason**: Precipitation seasonality (coefficient of variation)
+
+-   **forest.**: Proportion forest cover in the landscape
+
+-   **lu_het**: Land use heterogeneity (Shannon diversity of local land-use classes)
+
+Use a GLM to build a model explaining the distribution patterns of *Eulaema nigrita*. Interpret the results and produce nice tables and figures.
+
+### Loack packages and read in data
+
+```{r message=FALSE, warning=FALSE}
+library(MASS)
+library(tidyverse)
+library(flexplot)
+library(ggpubr)
+library(RColorBrewer)
+```
+
+### Glimpse of the data
+
+```{r}
+# Read in data
+dat = read.csv("../00_DATA/Eulaema.csv")
+
+# Inspect data
+glimpse(dat)
+
+# Lets factor the methods
+dat$method <- as.factor(dat$method)
+
+# Looks good
+
+```
+
+### Exploring the data
+
+```{r}
+# Plot the Eulaema nigrita as density plot
+dat %>% 
+  ggplot(aes(x = Eulaema_nigrita)) +
+  geom_density(fill = "grey", alpha = 0.5) +
+  labs(x = "Abundance of Eulaema nigritas", y = "Density") +
+  theme_bw()
+
+```
+
+The plot is indicating that the data is following a *Poisson distribution*. Lets explore the mean to variance relation to determine if we need to use *bionomial* or *quasi-poisson* distribution to fit a model.
+
+I will split up the data into bins and take the mean and variance for each bin to plot against.
+
+```{r}
+# Generating variance vs mean plot
+nrow(dat) # 178
+
+# Number of counted cases
+nrows <- 1:nrow(dat)
+
+# Sorted E. nigritas
+E_nig_sorted <- sort(dat$Eulaema_nigrita)
+
+# Number of bins
+num_bins <- 12
+
+# Calculate bin size
+bin_size <- ceiling(length(E_nig_sorted) / num_bins)
+
+# Initialize vectors for variance and mean
+vars <- numeric(num_bins)
+means <- numeric(num_bins)
+
+# Bin the cases and calculate variance and mean for each bin
+for (i in 1:num_bins) {
+  start_index <- (i - 1) * bin_size + 1
+  end_index <- min(i * bin_size, length(E_nig_sorted))
+  bin <- E_nig_sorted[start_index:end_index]
+  vars[i] <- var(bin)
+  means[i] <- mean(bin)
+}
+
+# Generate variance/mean dataframe
+df_bins <- data.frame(var = vars, mean = means)
+
+# Plotting the variance against mean
+df_bins %>%
+  mutate(log.var = log(var)) %>% 
+  mutate(log.mean = log(mean)) %>% 
+  ggplot(aes(log.mean, log.var)) +
+  geom_jitter(size=5, shape = 21, fill = "blue") +
+  geom_abline(intercept = 0, slope = 1, color = "red") +
+  theme_bw()
+
+```
+
+The plot shows a clear overdispersion, especially at larger mean values. To be able to handle the tail, a *quasi-poisson* model will not work. Here, a *binomial* model will work better.
+
+Here we see how the variance is not equal to the mean.
+
+```{r}
+# Checking the mean and var for all the data
+var(E_nig_sorted); mean(E_nig_sorted)
+
+```
+
+With the large overdispersion there is some underlying factor that is generating this variance. Lets check if the methods maybe act on variance
+
+```{r}
+# Count number of methods
+unique(dat$method)   # "NetTraps" "Traps"    "Net" 
+sum(dat$method == "NetTraps")  # 29
+sum(dat$method == "Net")    # 101
+sum(dat$method == "Traps")  # 48
+
+# Violin plot to see how the distribution looks like based on method.
+dat %>% 
+  ggplot(aes(method, Eulaema_nigrita, fill = method)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1, color = "black", fill = "white",
+               alpha = 0.7) +
+  scale_fill_brewer(palette="Set2") +
+  theme_bw()
+
+```
+
+There are definitely a few outliers, specially one in **Traps**.
+
+### Lets fit a model
+
+As expected, we see a very high null deviance due to the overdispersion!
+
+```{r}
+# Analysis
+# Generate a complex model with all the variables
+m_all <- glm(Eulaema_nigrita ~ ., data = dat, family = "poisson")
+summary(m_all)  # Very high null deviance as we expected overdispersion!
+
+```
+
+Thus, we do a negative binomial regression
+
+```{r}
+# Thus we do a negative binomial regression
+nb_all <- glm.nb(Eulaema_nigrita ~ ., data = dat)
+summary(nb_all) # Much better!
+
+```
+
+Lets see if we can remove some of the variables that are not significant. I see that `lu_het` is not significant as it is less than 2 SD from the mean. As well as for `methodNetTraps` however, i will keep it in the model for now.
+
+```{r}
+nb_imp1 <- glm.nb(Eulaema_nigrita ~ . - lu_het, data = dat)
+summary(nb_imp1)
+```
+
+Now, i remove the ones that have very small effect size
+
+```{r}
+nb_imp2 <- glm.nb(Eulaema_nigrita ~ . - lu_het - altitude - MAP - Tseason,
+                  data = dat)
+summary(nb_imp2)
+```
+
+The `method` is not significant anymore, lets remove it also
+
+```{r}
+nb_imp3 <- glm.nb(Eulaema_nigrita ~ effort+MAT+Pseason+forest., data = dat)
+summary(nb_imp3)
+```
+
+```{r}
+df_models <- data.frame(
+  model = c("m_all", "nb_all", "nb_imp1", "nb_imp2", "nb_imp3"),
+  AIC = c(NA, 1776.8, 1774.9, 1829.2, 1825.3),
+  Theta = c(NA, 1.125, 1.125, 0.8383, 0.8381),
+  Res.dev = c(11295, 204, 204, 210, 210),
+  deg.free = c(167, 167, 168, 171, 173)
+)
+
+df_models
+
+```
+
+Lets now plot the model against the data. As `forest.` has the biggest effect size, lets plots the data against it.
+
+```{r}
+# Plotting the model against the data using ggplot and fitting the nb_imp3 model as a regression line
+fit_m <- fitted(nb_imp3)
+
+dat %>% 
+  mutate(fitted = fitted(nb_imp3)) %>% 
+  ggplot(aes(forest., Eulaema_nigrita)) +
+  geom_point(aes(color = method)) + 
+  geom_line(aes(forest., fitted), color = "black") +
+  geom_smooth(method = "glm.nb", se = FALSE, linetype = "dashed",
+              color = "black") +
+  theme_bw() +
+  annotate("text", x = 0.75, y = 750, label = "dashed = glm.nb") +
+  annotate("text", x = 0.75, y = 700, label = "solid = curated model") 
+
+```
+
+
+The model fits well overall, however there is something going on in the beginning as the residuals are greater. The model doesnt handle the first values well as the residuals are greater there.
+```{r}
+# Plotting the residuals using ggplot
+dat %>% 
+  mutate(residuals = resid(nb_imp3, type = "pearson")) %>% 
+  ggplot(aes(fitted(nb_imp3), residuals)) +
+  geom_point() +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(x = "Fitted Values", y = "Standardized Deviance Residuals") +
+  theme_bw()
+
+```
+
+### Result
+
