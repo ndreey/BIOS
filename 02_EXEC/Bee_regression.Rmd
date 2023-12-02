@@ -221,8 +221,8 @@ dat %>%
 
 ```
 
-
 The model fits well overall, however there is something going on in the beginning as the residuals are greater. The model doesnt handle the first values well as the residuals are greater there.
+
 ```{r}
 # Plotting the residuals using ggplot
 dat %>% 
@@ -236,4 +236,3 @@ dat %>%
 ```
 
 ### Result
-
