@@ -1,0 +1,154 @@
+---
+title: "Casual Inference"
+author: "Andre Bourbonnais"
+date: "2023-12-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}}
+library(tidyverse)
+library(piecewiseSEM)
+
+```
+
+## Correlation and causation
+Correlation does not imply causation. This is a very important concept to understand as it underscores the importance of interpreting results from observational studies.
+
+```{r}
+
+raw_dat <- read.table("../00_DATA/alpineplants.csv", header = TRUE, sep = ",")
+
+glimpse(raw_dat)
+
+```
+## Wrightian Path analysis
+In its simplest form, a path analysis consists of a series of correlations combined with linear regressions fitted to standardized variables (zero mean, unit variance), thus obtaining *path coefficients*. Before going into technical aspects, a critical point is that before estimating any parameters, causal inference through path analysis or related methods requires formulating a graphical model in the form of a *directed graph* showing the assumed causal (and non-causal) relationships between a set of variables.
+
+As an example, we will consider two different models for how snow depth, minimum winter temperature and soil moisture affect the distribution and abundance of *Carex bigelowii*. In the first model, we will assume independent effects of each predictor, thus building a path model on the form
+
+$$snow \rightarrow Carex.bigelowii$$
+$$min.T.winter \rightarrow Carex.bigelowii$$
+$$soil.moist \rightarrow Carex.bigelowii$$
+An alternative model is that snow cover affects winter temperature and soil moisture, which is turn affects the plant.
+
+$$snow \rightarrow soil.moist$$
+$$snow \rightarrow min.T.winter$$
+
+$$min.T.winter \rightarrow Carex.bigelowii$$
+$$snow \rightarrow Carex.bigelowii$$
+
+In path analysis, we call the response variables (with arrows coming into them) *endogeneous* variables, and the predictors (with arrows only going out of them) *exogeneous* variables.
+
+The first model can be fitted as a standard multiple regression, while the second model will involve fitting three different component models. Before fitting the models, we remove some `NA`s and *z*-transform all variables (including the response variables).
+
+```{r}
+# Remove NA's and scale variables
+dat <- raw_dat %>% 
+  select(snow, min_T_winter, soil_moist, Carex.bigelowii) %>% 
+  na.omit() %>% 
+  scale() %>% 
+  as.data.frame()
+
+glimpse(dat)
+```
+
+We see now that means and standard deviations are zero and one, respectively. 
+
+```{r}
+# Means
+round(colMeans(dat),2)
+
+```
+
+```{r} 
+# Standard deviations
+round(apply(dat, 2, sd),2)
+
+```
+
+
+Lets infer:
+
+- How all the parameters affect *C. bigelowii*.
+
+- How snow affects min_T_winter and soil_moist.
+
+- How min_T_winter and soil_moist affect *C. bigelowii*.
+```{r}
+# Fit model
+m1 <- lm(Carex.bigelowii ~ snow + min_T_winter + soil_moist, data = dat)
+
+# The endogenous variable is on the left side of the formula
+# The exogenous variables is on the right side. 
+m2a <- lm(min_T_winter ~ snow, data = dat)
+m2b <- lm(soil_moist ~ snow, data = dat)
+
+# How does winter and moist affect without snow in the picture.
+m2c <- lm(Carex.bigelowii ~ min_T_winter + soil_moist, data = dat)
+
+
+# First model summary
+summary(m1)
+
+```
+We notice that they have positive but very small effects on *C. bigelowii* but with weak support. Lets add the estimates, correlations and the unexplained variance.
+
+```{r}
+# Snow to min_T_winter
+r1 <- cor(dat$snow, dat$min_T_winter, "pairwise") # 0.792
+u1 <- sqrt(1 - r1^2) # 0.609
+
+# Snow to soil_moist
+r2 <- cor(dat$snow, dat$soil_moist, "pairwise") # 0.443
+u2 <- sqrt(1 - r2^2) # 0.896
+
+# min_T_winter to Carex.bigelowii
+r3 <- cor(dat$min_T_winter, dat$Carex.bigelowii, "pairwise") # 0.357
+u3 <- sqrt(1 - r3^2) # 0.934
+
+# soil_moist to Carex.bigelowii
+r4 <- cor(dat$soil_moist, dat$Carex.bigelowii, "pairwise") # 0.197
+u4 <- sqrt(1 - r4^2) # 0.980
+
+# snow to Carex.bigelowii
+r5 <- cor(dat$snow, dat$Carex.bigelowii, "pairwise") # 0.357
+u5 <- sqrt(1 - r5^2) # 0.934
+
+
+```
+
+
+## Structrual equation modeling
+Structural equation modeling (SEM) is a generalization of path analysis that allows for more complex models, including latent variables. In SEM, we can also fit models with categorical variables, which is not possible in path analysis.
+
+
+```{r}
+# Fit model
+m2 = psem(lm(soil_moist~snow, data=dat),
+          lm(min_T_winter~snow, data=dat),
+          lm(Carex.bigelowii~min_T_winter+soil_moist, data=dat), 
+          data=dat)
+
+summary(m2)
+plot(m2)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
