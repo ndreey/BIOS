@@ -1,0 +1,110 @@
+---
+title: "Home_Exam_2"
+author: "Andre Bourbonnais"
+date: "2023-12-07"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(deSolve)
+```
+
+## Protein Production
+
+Protein production (6p) Assume a cell produces a particular protein at a
+fixed rate $\large a$. The protein leaks out of the cell membrane at a
+rate depending on the protein concentration within the cell. The
+dynamics of the protein concentration in the cell can thus be written.
+
+$$ \Large \frac{dP}{dt} = a - bP $$
+
+where $\large P$ is the protein concentration in the cell, $\large a$ is
+the production rate of the protein and $\large b$ is the leakage rate of
+the protein.
+
+### a) What is the equilibrium concentration of the protein in the cell?
+
+To solve for the equilibrium concentration of the protein in the cell,
+we set the derivative of the protein concentration with respect to time
+equal to zero and solve for the protein concentration.
+
+$$ \Large \frac{dP}{dt} = a - bP = 0 $$
+$$ \Large P = \frac{a}{b} = P^* $$ \### b) Show mathematically that it
+is a stable equilibrium. A stable equilibrium is one where the system
+will return to the equilibrium point after a small perturbation. An
+equilibrium point is stable if: $$ \Large f'(P^*) < 0 $$
+$$ \Large f'(P^*) = -b < 0 $$ Thus, the equilibrium point is stable.
+
+### Furthermore,
+
+Assume further that the cell also produces another protein, $\large Q$,
+which catalyzes the breakdown of $\large P$. The production of
+$\large Q$ is stimulated by the concentration of $\large P$. One can
+think of $\large Q$ as a way to regulate the concentration of
+$\large P$. The combined dynamics of $\large P$ and $\large Q$ can now
+be written:
+
+$$ \Large \frac{dP}{dt} = a - bP - cPQ $$
+$$ \Large \frac{dQ}{dt} = rP - bQ $$
+
+where it is assumed that $\large Q$ has the same leaking rate $\large b$
+as $\large P$.
+
+### c) Calculate the equilibrium $\large (P^*,Q^*)$ of the system.
+
+First we calculate $\large P^*$ and $\large Q^*$ (i) then we check if
+they both are stable equilibrium points (ii).
+
+i)  Calculate $\large P^*$ $$\large 0 = a-bP-cPQ$$
+    $$\large bP + cPQ = a$$ $$ \large P^* = \frac{a}{b+cQ}$$
+
+    Calculate $\large Q^*$ $$\large 0 = rP-bQ$$ $$\large bQ = rP$$
+    $$\large Q^* = \frac{rP}{b}$$
+
+ii) Check if $\large P^*$ and $\large Q^*$ are stable equilibrium.
+
+### Program in R so that
+
+i)  plots the isoclines in the phase space of the system above.
+
+ii) Simulates the dyamics and plots the resulting trajectory in the same
+    phase space.
+
+*"What will the catalyzator (Q) concentration be when the protein
+(dP/dt) growth equals zero?"*
+
+$$ \Large \frac{dP}{dt} = a - bP - cPQ = 0 $$
+$$ \Large Q = \frac{a-bP}{cP} $$
+$$ \Large Q = \frac{a}{cP} - \frac{b}{c} $$
+
+*"What will the protein (P) concentration be when the catalyzator
+(dQ/dt) growth equals zero?"*
+
+$$ \Large \frac{dQ}{dt} = rP - bQ = 0 $$ $$ \Large P = \frac{bQ}{r} $$
+
+```{r}
+
+
+# Define the parameters
+params <- list(a = 1, b = 1, c = 1, r = 1)
+
+# 
+
+
+
+
+ 
+
+
+
+
+
+```
